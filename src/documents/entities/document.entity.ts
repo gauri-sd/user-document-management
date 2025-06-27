@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { Users } from '../../users/entities/user.entity';
 
 @Entity()
 export class Document {
@@ -33,14 +33,14 @@ export class Document {
   @Column({ default: 'draft' })
   status: string; // draft, published, archived
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  createdBy: User;
+  @ManyToOne(() => Users, { onDelete: 'CASCADE' })
+  createdBy: Users;
 
   @Column()
   createdById: number;
 
-  @ManyToOne(() => User, { nullable: true })
-  updatedBy: User;
+  @ManyToOne(() => Users, { nullable: true })
+  updatedBy: Users;
 
   @Column({ nullable: true })
   updatedById: number;

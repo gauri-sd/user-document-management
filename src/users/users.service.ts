@@ -1,22 +1,23 @@
 import { Injectable, ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { Users } from './entities/user.entity';
 import { RegisterDto } from '../auth/dto/register.dto';
 import { UserRole } from '../common/constants';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>
+    @InjectRepository(Users)
+    private usersRepository: Repository<Users>
   ) {}
 
-  async findByEmail(email: string): Promise<User> {
+  async findByEmail(email: string): Promise<Users> {
     return this.usersRepository.findOne({ where: { email } });
   }
 
-  async findById(id: number): Promise<User> {
+  async findById(id: number): Promise<Users> {
     const user = await this.usersRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException('User not found');
@@ -24,7 +25,7 @@ export class UsersService {
     return user;
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<Users[]> {
     return this.usersRepository.find({
       relations: [
         'createdDocuments',
@@ -33,7 +34,7 @@ export class UsersService {
     });
   }
 
-  async findUserWithDocuments(id: number): Promise<User> {
+  async findUserWithDocuments(id: number): Promise<Users> {
     const user = await this.usersRepository.findOne({
       where: { id },
       relations: [
@@ -49,22 +50,26 @@ export class UsersService {
     return user;
   }
 
-  async create(registerDto: RegisterDto): Promise<User> {
+  async create(registerDto: RegisterDto): Promise<Users> {
     const existingUser = await this.findByEmail(registerDto.email);
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
 
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(registerDto.password, saltRounds);
+
     const user = this.usersRepository.create({
       email: registerDto.email,
-      password: registerDto.password, // In production, this should be hashed
+      password: hashedPassword,
       roles: registerDto.roles,
     });
 
     return this.usersRepository.save(user);
   }
 
-  async updateUserRoles(userId: number, newRoles: UserRole[]): Promise<User> {
+  async updateUserRoles(userId: number, newRoles: UserRole[]) {
     const user = await this.findById(userId);
     if (!user) {
       throw new Error('User not found');

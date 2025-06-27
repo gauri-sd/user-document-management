@@ -4,19 +4,32 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { User } from '../users/entities/user.entity';
+import { Users } from '../users/entities/user.entity';
 import { UserRole } from '../common/constants';
 import { UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+
+// Mock bcrypt
+jest.mock('bcrypt');
+const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 describe('AuthService', () => {
   let service: AuthService;
   let usersService: UsersService;
   let jwtService: JwtService;
 
-  const mockUser: User = {
+  const mockUser: Users = {
     id: 1,
     email: 'test@example.com',
-    password: 'password123',
+    password: 'hashedPassword',
+    roles: [UserRole.VIEWER],
+    createdDocuments: [],
+    updatedDocuments: [],
+  };
+
+  const mockUserWithoutPassword = {
+    id: 1,
+    email: 'test@example.com',
     roles: [UserRole.VIEWER],
     createdDocuments: [],
     updatedDocuments: [],
@@ -90,17 +103,13 @@ describe('AuthService', () => {
   describe('validateUser', () => {
     it('should return user if credentials are correct', async () => {
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(true as never);
 
       const result = await service.validateUser(mockLoginDto.email, mockLoginDto.password);
 
       expect(mockUsersService.findByEmail).toHaveBeenCalledWith(mockLoginDto.email);
-      expect(result).toEqual({
-        id: mockUser.id,
-        email: mockUser.email,
-        roles: mockUser.roles,
-        createdDocuments: mockUser.createdDocuments,
-        updatedDocuments: mockUser.updatedDocuments,
-      });
+      expect(mockBcrypt.compare).toHaveBeenCalledWith(mockLoginDto.password, mockUser.password);
+      expect(result).toEqual(mockUserWithoutPassword);
     });
 
     it('should return null if user not found', async () => {
@@ -113,6 +122,7 @@ describe('AuthService', () => {
 
     it('should return null if password is incorrect', async () => {
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(false as never);
 
       const result = await service.validateUser(mockLoginDto.email, 'wrongpassword');
 
@@ -123,15 +133,9 @@ describe('AuthService', () => {
   describe('login', () => {
     it('should login user successfully with correct credentials', async () => {
       const expectedToken = 'jwt_token_123';
-      const userWithoutPassword = {
-        id: mockUser.id,
-        email: mockUser.email,
-        roles: mockUser.roles,
-        createdDocuments: mockUser.createdDocuments,
-        updatedDocuments: mockUser.updatedDocuments,
-      };
 
       mockUsersService.findByEmail.mockResolvedValue(mockUser);
+      mockBcrypt.compare.mockResolvedValue(true as never);
       mockJwtService.sign.mockReturnValue(expectedToken);
 
       const result = await service.login(mockLoginDto);

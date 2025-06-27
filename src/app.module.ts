@@ -6,7 +6,7 @@ import { UsersModule } from "./users/users.module";
 import { DocumentsModule } from "./documents/documents.module";
 import { IngestionModule } from "./ingestion/ingestion.module";
 import { ProcessingModule } from "./processing/processing.module";
-import { User } from "./users/entities/user.entity";
+import { Users } from "./users/entities/user.entity";
 import { Document } from "./documents/entities/document.entity";
 import { IngestionJob } from "./ingestion/entities/ingestion-job.entity";
 
@@ -20,7 +20,7 @@ import { IngestionJob } from "./ingestion/entities/ingestion-job.entity";
       username: process.env.DB_USER,
       // password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User, Document, IngestionJob],
+      entities: [Users, Document, IngestionJob],
       synchronize: true,
       // ssl: {
       //   rejectUnauthorized: false

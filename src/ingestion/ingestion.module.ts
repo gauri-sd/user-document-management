@@ -15,4 +15,4 @@ import { ProcessingModule } from '../processing/processing.module';
   providers: [IngestionService],
   exports: [IngestionService],
 })
-export class IngestionModule {} 
+export class IngestionModule {}

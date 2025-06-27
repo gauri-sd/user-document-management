@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
+import { Users } from '../../users/entities/user.entity';
 
 export enum IngestionStatus {
   PENDING = 'pending',
@@ -74,9 +74,9 @@ export class IngestionJob {
   @Column({ type: 'timestamp', nullable: true })
   nextRetryAt: Date;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Users, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'created_by_id' })
-  createdBy: User;
+  createdBy: Users;
 
   @Column()
   createdById: number;
